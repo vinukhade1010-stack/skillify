@@ -28,7 +28,6 @@ Skillify is an AI tutor for college students. Students sign up with their degree
 5. Open http://localhost:5000
 
 ## Notes
-- Never commit API keys. Keys are read from environment variables only.
 - To use MySQL, edit `src/main/resources/application.properties`.
 - The AI model name is set in `application.properties` (`ai.model`).
 
