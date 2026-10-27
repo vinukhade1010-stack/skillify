@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Home · Skillify</title><link rel="stylesheet" href="css/style.css">
+</head><body data-guard="1">
+<div class="shell"><main>
+ <h2 id="hi">Pick a topic</h2>
+ <p>Topics chosen for your degree. Tap one to take an AI-written quiz.</p>
+ <input id="s" type="search" placeholder="Search topics" aria-label="Search topics" style="margin-top:1rem">
+ <div class="chips" id="tabs"><button class="chip on" data-f="all">All</button><button class="chip" data-f="done">Tested</button><button class="chip" data-f="new">Not tested</button></div>
+ <p id="err" class="tag" role="alert" hidden></p>
+ <div class="topics" id="topics"><div class="card sk"></div><div class="card sk"></div><div class="card sk"></div><div class="card sk"></div></div>
+</main></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="js/api.js"></script><script src="js/common.js"></script>
+<script>
+let T=[],P={},tab='all';
+$('#hi').textContent=`Hi ${user().name}, pick a topic`;
+(async()=>{try{[T,P]=await Promise.all([API.topics(),API.progress()]);draw()}
+ catch(e){$('#topics').innerHTML='';$('#err').hidden=false;$('#err').textContent=e.message}})();
+function draw(){const q=$('#s').value.toLowerCase();
+ const l=T.filter(x=>x.toLowerCase().includes(q)&&(tab=='all'||(tab=='done')==(P[x]!=null)));
+ $('#topics').innerHTML=l.length?l.map(x=>{const v=P[x];return `<button class="card topic" data-t="${esc(x)}"><div class="ring" data-p="${v||0}"><b>${v==null?'–':v+'%'}</b></div><div>${esc(x)}<br><span class="${v==null?'':v<50?'tag':'ok'}">${v==null?'Not tested yet':v<50?'Needs work':'Going well'}</span></div></button>`}).join(''):'<p>No topics match.</p>';
+ $$('.topic').forEach(b=>b.onclick=()=>location.href='quiz.html?topic='+encodeURIComponent(b.dataset.t));
+ gsap.from('.topic',{y:24,opacity:0,stagger:.05});gsap.to('.ring',{'--p':(i,el)=>+el.dataset.p,duration:1,stagger:.05})}
+$('#s').oninput=draw;
+$$('#tabs .chip').forEach(c=>c.onclick=()=>{tab=c.dataset.f;$$('#tabs .chip').forEach(x=>x.classList.toggle('on',x==c));draw()});
+</script></body></html>

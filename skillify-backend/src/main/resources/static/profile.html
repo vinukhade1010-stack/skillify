@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Profile · Skillify</title><link rel="stylesheet" href="css/style.css">
+</head><body data-guard="1">
+<div class="shell"><main>
+ <p id="load">Loading…</p><p id="err" class="tag" role="alert" hidden></p>
+ <div class="ph" id="ph" hidden><div class="av" id="av"></div><div><h2 id="nm" style="margin:0"></h2><p id="em"></p></div></div><br>
+ <form class="card" id="f" hidden style="display:grid;gap:.8rem"></form>
+ <section id="hist" hidden><h2>Score history</h2><div class="card"><div id="ch"></div><div id="hl"></div></div></section>
+</main></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="js/api.js"></script><script src="js/common.js"></script>
+<script>
+const F=[['name','Name'],['college','College'],['degree','Degree'],['branch','Branch'],['year','Year of study'],['cgpa','CGPA or percentage'],['targetRole','Target role'],['interests','Interests'],['level','Skill level']];
+const ini=n=>String(n||'?').trim().split(/\s+/).slice(0,2).map(x=>x[0].toUpperCase()).join('');
+(async()=>{try{const p=await API.profile();$('#load').hidden=true;
+ $('#ph').hidden=false;$('#av').textContent=ini(p.name);$('#nm').textContent=p.name;$('#em').textContent=p.email;
+ const f=$('#f');f.hidden=false;
+ f.innerHTML=F.map(([k,l])=>`<label>${l}<input name="${k}" value="${esc(p[k])}" readonly></label>`).join('')+`<div class="row"><button type="button" class="btn alt" id="ed">Edit profile</button><button class="btn" id="sv" hidden>Save changes</button></div>`;
+ $('#ed').onclick=()=>{$$('#f input').forEach(i=>i.readOnly=false);$('#sv').hidden=false;$('#ed').hidden=true;$('#f input').focus();toast('You can edit your details now')};
+ const h=(p.history||[]).slice(-10);
+ if(h.length){$('#hist').hidden=false;
+  const W=300,H=120,pad=14,xs=i=>h.length==1?W/2:pad+i*(W-2*pad)/(h.length-1),ys=v=>H-pad-v/100*(H-2*pad);
+  $('#ch').innerHTML=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Line chart of your last ${h.length} quiz scores"><line class="gl" x1="0" x2="${W}" y1="${ys(50)}" y2="${ys(50)}"/><polyline class="ln" pathLength="1" points="${h.map((x,i)=>xs(i)+','+ys(x.score)).join(' ')}"/>${h.map((x,i)=>`<circle class="dt" cx="${xs(i)}" cy="${ys(x.score)}" r="5"><title>${esc(x.topic)}: ${esc(x.score)}%</title></circle>`).join('')}</svg>`;
+  $('#hl').innerHTML=h.slice().reverse().map(x=>`<div class="hist"><b>${esc(x.topic)}</b><span>${esc(x.score)}% · ${esc(x.date.slice(0,10))}</span></div>`).join('');
+  gsap.fromTo('.ln',{strokeDashoffset:1},{strokeDashoffset:0,duration:1.4,ease:'power2.inOut'});gsap.from('.dt',{scale:0,transformOrigin:'50% 50%',stagger:.1,delay:.4})}
+ gsap.from('#ph,#f>*,#hist',{y:20,opacity:0,stagger:.05});
+ f.onsubmit=async e=>{e.preventDefault();const b=$('#sv');b.disabled=true;
+  try{const r=await API.saveProfile(Object.fromEntries(new FormData(f)));localStorage.setItem('skillify_user',JSON.stringify({name:r.name}));
+   $('#nm').textContent=r.name;$('#av').textContent=ini(r.name);$$('#f input').forEach(i=>i.readOnly=true);b.hidden=true;$('#ed').hidden=false;toast('Saved. Your topics now match these details.')}
+  catch(x){toast(x.message)}b.disabled=false}}
+ catch(e){$('#load').hidden=true;$('#err').hidden=false;$('#err').textContent=e.message}})();
+</script></body></html>

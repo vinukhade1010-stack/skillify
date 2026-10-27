@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Roadmap · Skillify</title><link rel="stylesheet" href="css/style.css">
+</head><body data-guard="1">
+<div class="shell"><main>
+ <h2>Your roadmap</h2>
+ <p id="load">Loading…</p><p id="err" class="tag" role="alert" hidden></p>
+ <div id="empty" hidden><p>No roadmap yet. Take a quiz and Skilly will build one from your score.</p><br><a class="btn" href="home.html">Choose a topic</a></div>
+ <div class="chips" id="tabs"></div><div id="rm"></div>
+</main></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="js/api.js"></script><script src="js/common.js"></script>
+<script>
+let all=[],cur,done=[],key;
+(async()=>{try{all=(await API.roadmaps()).filter(x=>x.roadmap);$('#load').hidden=true;
+ if(!all.length){$('#empty').hidden=false;return}
+ const want=new URLSearchParams(location.search).get('topic');cur=all.find(x=>x.topic==want)||all[0];
+ if(all.length>1)$('#tabs').innerHTML=all.map((x,n)=>`<button class="chip" data-n="${n}">${esc(x.topic)}</button>`).join('');
+ $$('#tabs .chip').forEach(c=>c.onclick=()=>{cur=all[c.dataset.n];render()});render()}
+ catch(e){$('#load').hidden=true;$('#err').hidden=false;$('#err').textContent=e.message}})();
+function prog(){const t=cur.roadmap.stages.length;gsap.to('#pf',{width:done.length/t*100+'%'});$('#pt').textContent=`${done.length} of ${t} stages done`}
+function render(){const r=cur.roadmap;key='skillify_done_'+cur.topic;done=JSON.parse(localStorage.getItem(key)||'[]');r.stages=r.stages||[];
+ $('#rm').innerHTML=`<div class="card"><p>Your score in ${esc(cur.topic)}</p><div class="big">${esc(cur.score)}%</div><p>${esc(r.summary)}</p>
+ <p>${(r.weakAreas||[]).map(w=>`<span class="pill">${esc(w)}</span>`).join(' ')}</p>
+ <div class="bigbar"><i id="pf"></i></div><p id="pt" aria-live="polite"></p></div><br>
+ ${r.stages.map((s,i)=>`<details class="card" ${i==0?'open':''}><summary><input type="checkbox" data-i="${i}" aria-label="Mark stage ${i+1} done" ${done.includes(i)?'checked':''}><b>${i+1}. ${esc(s.title)}</b><span class="wk">${esc(s.weeks)} wk</span></summary>
+  <div class="bd"><p>${esc(s.goal)}</p><ul>${(s.tasks||[]).map(t=>`<li>${esc(t)}</li>`).join('')}</ul>
+  <div><button class="btn alt vb" data-i="${i}">Watch videos for this stage</button></div><div id="v${i}"></div></div></details><br>`).join('')}
+ <h2>What to learn next</h2><div class="recs">${(r.learnNext||[]).map(n=>`<div class="card"><b>${esc(n.skill)}</b><p>${esc(n.why)}</p></div>`).join('')}</div>`;
+ $$('summary input').forEach(c=>c.onchange=()=>{const i=+c.dataset.i;done=c.checked?[...new Set([...done,i])]:done.filter(x=>x!=i);
+  localStorage.setItem(key,JSON.stringify(done));prog();
+  if(done.length==r.stages.length){confetti();toast('Roadmap complete. Great work!')}});
+ $$('.vb').forEach(b=>b.onclick=()=>vids(+b.dataset.i,b));
+ $$('#tabs .chip').forEach(c=>c.classList.toggle('on',all[c.dataset.n]===cur));
+ gsap.from('#rm>*',{y:24,opacity:0,stagger:.06});prog()}
+async function vids(i,b){const box=$('#v'+i),q=cur.roadmap.stages[i].videoQuery||cur.topic+' tutorial';b.disabled=true;b.textContent='Finding videos…';
+ const yt=`<a href="https://www.youtube.com/results?search_query=${encodeURIComponent(q)}" target="_blank" rel="noopener">Search on YouTube instead</a>`;
+ try{const d=await API.videos(q),l=(d.videos||[]).filter(v=>/^[\w-]{11}$/.test(v.videoId));
+  if(!l.length){box.innerHTML=`<p>${d.configured?'No videos found.':'Video search is not set up on the server (YOUTUBE_API_KEY).'} ${yt}</p>`;b.hidden=true;return}
+  box.innerHTML=`<div class="vid"><iframe src="https://www.youtube-nocookie.com/embed/${l[0].videoId}" title="${esc(l[0].title)}" loading="lazy" allow="encrypted-media; picture-in-picture" allowfullscreen></iframe></div>
+   <div class="chips">${l.map(v=>`<button class="chip" data-id="${v.videoId}">${esc(v.title)}</button>`).join('')}</div>`;
+  $$('.chip',box).forEach(c=>c.onclick=()=>$('iframe',box).src='https://www.youtube-nocookie.com/embed/'+c.dataset.id);
+  b.hidden=true;gsap.from(box,{opacity:0,y:20})}
+ catch(e){box.innerHTML=`<p class="tag">${esc(e.message)}</p>${yt}`;b.disabled=false;b.textContent='Try again'}}
+</script></body></html>

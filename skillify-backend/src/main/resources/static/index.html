@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Skillify: your AI tutor</title><link rel="stylesheet" href="css/style.css">
+</head><body>
+<header class="hero">
+ <div>
+  <h1 id="h">Stuck? Skilly finds what you're missing.</h1>
+  <p>Tell Skilly about your degree, take an AI quiz on the topics that matter for you, and get a roadmap with videos for every gap.</p>
+  <div class="row"><a class="btn" href="signup.html">Sign up</a><a class="btn alt" href="login.html">Log in</a></div>
+  
+ </div>
+ <div class="stage">
+  <div class="say" id="say" aria-live="polite">Click me!</div>
+  <svg id="skilly" viewBox="0 0 200 200" role="button" tabindex="0" aria-label="Skilly the tutor. Press to hear a tip.">
+   <line x1="100" y1="22" x2="100" y2="8" stroke="#161a3a" stroke-width="5"/>
+   <g id="antenna"><circle cx="100" cy="10" r="9" fill="#ffe14d"/></g>
+   <circle cx="100" cy="108" r="82" fill="#4f3cff"/>
+   <circle cx="70" cy="95" r="21" fill="#fff"/><circle cx="130" cy="95" r="21" fill="#fff"/>
+   <circle class="pu" cx="70" cy="95" r="9" fill="#161a3a"/><circle class="pu" cx="130" cy="95" r="9" fill="#161a3a"/>
+   <path d="M70 140 Q100 165 130 140" stroke="#fff" stroke-width="8" fill="none" stroke-linecap="round"/>
+  </svg>
+ </div>
+</header>
+<section class="feat"><div class="grid3">
+ <div class="card" data-tilt><h2>Made for your degree</h2><p>Topics and questions picked from your course, branch and level.</p></div>
+ <div class="card" data-tilt><h2>A roadmap from your score</h2><p>Every quiz becomes a step-by-step plan, plus what to learn next.</p></div>
+ <div class="card" data-tilt><h2>Videos for every gap</h2><p>Watch a matching video right inside your roadmap.</p></div>
+</div></section>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="js/api.js"></script><script src="js/common.js"></script>
+<script>
+const h=$('#h');h.innerHTML=h.textContent.split(' ').map(w=>`<span class="w">${w}</span>`).join(' ');
+gsap.timeline().from('.w',{y:50,opacity:0,stagger:.07}).from('.hero p,.hero .row',{y:20,opacity:0,stagger:.1},'-=.3')
+ .from('#skilly',{scale:0,transformOrigin:'50% 100%',ease:'elastic.out(1,.5)',duration:1.1},0.2).from('.say',{opacity:0},'-=.4');
+</script></body></html>

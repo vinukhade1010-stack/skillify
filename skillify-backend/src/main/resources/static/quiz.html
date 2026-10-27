@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Quiz · Skillify</title><link rel="stylesheet" href="css/style.css">
+</head><body data-guard="1">
+<div class="shell"><main>
+ <h2 id="tt"></h2>
+ <p id="load">Skilly is writing your questions…</p>
+ <p id="err" class="tag" role="alert" hidden></p><a class="btn" id="retry" href="" hidden>Try again</a>
+ <section id="play" hidden>
+  <div class="qh"><p id="qn"></p><span id="st" class="streak" hidden></span>
+   <svg id="tm" viewBox="0 0 44 44" width="52" role="timer" aria-label="Time left"><circle class="tbg" cx="22" cy="22" r="19"/><circle class="tfg" id="tc" cx="22" cy="22" r="19" pathLength="100"/><text id="tn" x="22" y="26" text-anchor="middle">30</text></svg></div>
+  <div class="pbar"><div id="prog"></div></div>
+  <h2 id="q"></h2><div class="opts" id="opts"></div>
+  <p class="exp" id="exp" hidden></p>
+  <button class="btn" id="next" hidden>Next question</button>
+  <p class="keys">Keys 1 to 4 pick an answer, Enter goes to the next question.</p>
+ </section>
+ <section id="res" class="card" hidden>
+  <div class="face" id="face">🙂</div><p>Your score</p><div class="score" id="score">0%</div><p id="msg" aria-live="polite"></p><br>
+  <div class="row"><a class="btn" id="rm" href="" hidden>View my roadmap</a><a class="btn alt" href="home.html">Back to topics</a></div>
+ </section>
+</main></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="js/api.js"></script><script src="js/common.js"></script>
+<script>
+const topic=new URLSearchParams(location.search).get('topic');if(!topic)location.href='home.html';
+let Q,i=0,score=0,streak=0,locked=false,wrong=[],tl;
+$('#tt').textContent=topic;
+const pulse=gsap.to('#load',{opacity:.4,yoyo:true,repeat:-1,duration:.6});
+(async()=>{try{Q=(await API.quiz(topic)).questions;pulse.kill();$('#load').hidden=true;$('#play').hidden=false;show()}
+ catch(e){pulse.kill();gsap.set('#load',{opacity:1});$('#load').hidden=true;$('#err').hidden=false;$('#err').textContent=e.message;$('#retry').hidden=false}})();
+function timer(){const o={t:30};
+ tl=gsap.to(o,{t:0,duration:30,ease:'none',onUpdate:()=>{const s=Math.ceil(o.t);$('#tn').textContent=s;$('#tc').style.strokeDashoffset=100-o.t/30*100;$('#tc').style.stroke=s<=8?'var(--bad)':'var(--pri)'},onComplete:()=>answer(null,-1)})}
+function show(){locked=false;const q=Q[i];$('#qn').textContent=`Question ${i+1} of ${Q.length}`;$('#q').textContent=q.q;
+ const o=$('#opts');o.innerHTML='';q.o.forEach((t,k)=>{const b=document.createElement('button');b.className='opt';b.textContent=`${k+1}. ${t}`;b.onclick=()=>answer(b,k);o.append(b)});
+ $('#next').hidden=$('#exp').hidden=true;gsap.to('#prog',{width:i/Q.length*100+'%'});gsap.from('#q,.opt',{y:20,opacity:0,stagger:.07});timer()}
+function answer(b,k){if(locked)return;locked=true;tl&&tl.kill();const q=Q[i],ok=k===q.a;
+ if(ok){score++;streak++}else{wrong.push(q.q);streak=0}
+ if(k===-1)toast("Time's up");
+ b&&b.classList.add(ok?'ok':'bad');$$('.opt')[q.a]?.classList.add('ok');
+ if(b)ok?gsap.fromTo(b,{scale:.95},{scale:1,ease:'elastic.out(1,.4)',duration:.8}):gsap.fromTo(b,{x:-10},{x:0,ease:'elastic.out(1,.2)',duration:.7});
+ const st=$('#st');st.hidden=streak<2;if(streak>=2){st.textContent='🔥 '+streak+' in a row';gsap.fromTo(st,{scale:1.5},{scale:1,ease:'back.out(3)'})}
+ if(q.e){$('#exp').hidden=false;$('#exp').textContent=q.e;gsap.from('#exp',{y:10,opacity:0})}
+ const n=$('#next');n.hidden=false;n.textContent=i+1<Q.length?'Next question':'See result';gsap.from(n,{y:10,opacity:0})}
+$('#next').onclick=()=>{i++;i<Q.length?show():finish()};
+addEventListener('keydown',e=>{if(!Q||$('#play').hidden)return;const n=+e.key;
+ if(n>=1&&n<=4&&!locked)$$('.opt')[n-1]?.click();
+ if(e.key==='Enter'&&!$('#next').hidden&&e.target.id!=='next')$('#next').click()});
+async function finish(){const pct=Math.round(score/Q.length*100);
+ $('#play').hidden=true;$('#res').hidden=false;const o={n:0};
+ $('#face').textContent=pct>=70?'😄':pct>=40?'🙂':'🤔';
+ gsap.to(o,{n:pct,duration:1.2,onUpdate:()=>$('#score').textContent=Math.round(o.n)+'%'});
+ gsap.from('#res>*',{y:20,opacity:0,stagger:.1});if(pct>=70)confetti();
+ $('#msg').textContent='Skilly is building your roadmap…';
+ try{const r=await API.submit(topic,pct,wrong);
+  if(r.roadmap){$('#msg').textContent='Your roadmap is ready.';const a=$('#rm');a.href='roadmap.html?topic='+encodeURIComponent(topic);a.hidden=false;gsap.from(a,{scale:.8,opacity:0})}
+  else $('#msg').textContent='Score saved, but the roadmap failed: '+(r.error||'unknown error')+'. Take the quiz again to retry.'}
+ catch(e){$('#msg').textContent=e.message}}
+</script></body></html>

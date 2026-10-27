@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Log in · Skillify</title><link rel="stylesheet" href="css/style.css">
+</head><body>
+<div class="login"><form class="card" id="f">
+ <h2>Welcome back</h2><p>New here? <a href="signup.html">Create an account</a></p>
+ <input type="email" id="em" placeholder="Email" aria-label="Email" required>
+ <input type="password" id="pw" placeholder="Password" aria-label="Password" required minlength="6">
+ <p id="err" class="tag" role="alert" hidden></p>
+ <button class="btn" id="go">Log in</button>
+</form></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="js/api.js"></script><script src="js/common.js"></script>
+<script>
+gsap.from('#f',{y:40,opacity:0,scale:.95});
+$('#f').onsubmit=async e=>{e.preventDefault();const b=$('#go');b.textContent='Logging in…';b.disabled=true;
+ try{const r=await API.login($('#em').value,$('#pw').value);
+  localStorage.setItem('skillify_token',r.token);localStorage.setItem('skillify_user',JSON.stringify({name:r.name}));
+  gsap.to('#f',{y:-30,opacity:0,onComplete:()=>location.href='home.html'})}
+ catch(x){$('#err').hidden=false;$('#err').textContent=x.message;b.textContent='Log in';b.disabled=false;
+  gsap.fromTo('#f',{x:-12},{x:0,ease:'elastic.out(1,.2)'})}};
+</script></body></html>

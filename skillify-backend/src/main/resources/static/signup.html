@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Sign up · Skillify</title><link rel="stylesheet" href="css/style.css">
+</head><body>
+<div class="login"><form class="card wide" id="f" novalidate>
+ <div class="dots"><i class="on"></i><i></i><i></i></div>
+ <fieldset class="st"><h2>Create your account</h2>
+  <input name="name" placeholder="Full name" aria-label="Full name" required>
+  <input name="email" type="email" placeholder="Email" aria-label="Email" required>
+  <div class="pw"><input name="password" id="pw" type="password" placeholder="Password (6+ characters)" aria-label="Password" minlength="6" required><button type="button" id="eye" aria-label="Show password">👁</button></div>
+  <div class="meter"><i id="mt"></i></div><small id="ml">Use 10+ characters with a capital, number and symbol.</small></fieldset>
+ <fieldset class="st"><h2>Your education</h2>
+  <input name="college" placeholder="College name" aria-label="College name" required>
+  <select name="degree" id="dg" aria-label="Degree" required><option value="">Degree</option><option>B.Tech</option><option>BCA</option><option>B.Sc</option><option>MBA</option><option>MCA</option><option>Other</option></select>
+  <input name="branch" list="br" placeholder="Branch (pick one or type)" aria-label="Branch" required><datalist id="br"></datalist>
+  <select name="year" aria-label="Year" required><option value="">Year of study</option><option>1</option><option>2</option><option>3</option><option>4</option></select>
+  <input name="cgpa" placeholder="CGPA or percentage" aria-label="CGPA or percentage"></fieldset>
+ <fieldset class="st"><h2>Your goals</h2>
+  <input name="targetRole" placeholder="Target role, e.g. Java Developer" aria-label="Target role" required>
+  <input name="interests" placeholder="Interests, e.g. web, AI, finance" aria-label="Interests">
+  <select name="level" aria-label="Skill level" required><option value="">Current skill level</option><option>Beginner</option><option>Intermediate</option><option>Advanced</option></select></fieldset>
+ <p id="err" class="tag" role="alert" hidden></p>
+ <div class="row"><button type="button" class="btn alt" id="back" hidden>Back</button><button class="btn" id="nx">Next</button></div>
+ <p>Have an account? <a href="login.html">Log in</a></p>
+</form></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="js/api.js"></script><script src="js/common.js"></script>
+<script>
+let s=0;const st=$$('.st'),dots=$$('.dots i');st.forEach((x,i)=>x.hidden=i>0);
+gsap.from('#f',{y:40,opacity:0,scale:.95});
+const BR={'B.Tech':['CSE','IT','Mechanical','Electronics','Electrical','Civil'],BCA:['Computer Applications'],MCA:['Computer Applications'],'B.Sc':['Computer Science','Mathematics','Physics','Chemistry'],MBA:['Finance','Marketing','HR','Operations']};
+$('#dg').onchange=e=>$('#br').innerHTML=(BR[e.target.value]||[]).map(x=>`<option value="${x}">`).join('');
+$('#eye').onclick=()=>{const p=$('#pw'),h=p.type=='password';p.type=h?'text':'password';$('#eye').setAttribute('aria-label',h?'Hide password':'Show password')};
+$('#pw').oninput=e=>{const p=e.target.value,n=(p.length>=6)+(p.length>=10)+/[A-Z]/.test(p)+/\d/.test(p)+/[^\w\s]/.test(p);
+ gsap.to('#mt',{width:n*20+'%',backgroundColor:n<3?'#e5484d':n<5?'#f5a524':'#12a679',duration:.3});
+ $('#ml').textContent=p?['Too short','Weak','Weak','Okay','Strong','Very strong'][n]:'Use 10+ characters with a capital, number and symbol.'};
+function go(n){const from=st[s],d=n>s?1:-1;
+ gsap.to(from,{x:-40*d,opacity:0,duration:.25,onComplete:()=>{from.hidden=true;s=n;st[s].hidden=false;
+  gsap.fromTo(st[s],{x:40*d,opacity:0},{x:0,opacity:1});
+  dots.forEach((t,i)=>t.classList.toggle('on',i<=s));$('#back').hidden=s==0;$('#nx').textContent=s==2?'Create account':'Next'}})}
+$('#back').onclick=()=>go(s-1);
+$('#f').onsubmit=async e=>{e.preventDefault();$('#err').hidden=true;
+ for(const i of $$('input,select',st[s]))if(!i.checkValidity()){i.reportValidity();return}
+ if(s<2)return go(s+1);
+ const b=$('#nx');b.textContent='Creating…';b.disabled=true;
+ try{login(await API.signup(Object.fromEntries(new FormData($('#f')))));gsap.to('#f',{y:-30,opacity:0,onComplete:()=>location.href='home.html'})}
+ catch(x){$('#err').hidden=false;$('#err').textContent=x.message;b.textContent='Create account';b.disabled=false;gsap.fromTo('#f',{x:-12},{x:0,ease:'elastic.out(1,.2)'})}};
+</script></body></html>
